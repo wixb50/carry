@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
 
+import os
 import pandas
 
 from carry import exc
+from carry.filelock import FileLock
 
 
 class DFIteratorAdapter(object):
@@ -31,8 +33,9 @@ class DFAdapter(object):
     def to_sql(self, *args, **kwargs):
         return self.df.to_sql(*args, **kwargs)
 
-    def to_csv(self, *args, **kwargs):
-        return self.df.to_csv(*args, **kwargs)
+    def to_csv(self, path, **kwargs):
+        with FileLock(path + '.lock'):
+            return self.df.to_csv(path, header=kwargs.pop('header') and os.stat(path).st_size == 0, **kwargs)
 
     def _check_columns(self, columns):
         df_columns = set(self.df.columns.values)
